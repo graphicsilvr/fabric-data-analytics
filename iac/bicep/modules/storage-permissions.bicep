@@ -28,11 +28,6 @@ param grant_reader bool = true
 @description('Flag to grant Storage Blob Data Contributor role to the storage account')
 param grant_contributor bool = true
 
-//Get Reference to storage account
-// resource storage_account 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
-//   name: 'storageAccountName'
-// }
-
 //In-built role definition for storage account
 @description('This is the built-in Storage Blob Contributor role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles')
 resource sbdcRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
