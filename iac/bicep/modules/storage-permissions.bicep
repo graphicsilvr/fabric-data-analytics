@@ -13,20 +13,13 @@ param grant_reader bool = true
 @description('Flag to grant Storage Blob Data Contributor role to the storage account')
 param grant_contributor bool = true
 
-<<<<<<< HEAD
-//Get Reference to storage account
+// Get Reference to storage account
 resource storage_account 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storage_name
-<<<<<<< HEAD
-  scope: resourceGroup('rg-fabric')
-=======
   scope: resourceGroup(storage_rg)
->>>>>>> upstream/main
 }
 
-=======
->>>>>>> github/main
-//In-built role definition for storage account
+// In-built role definition for storage account
 @description('This is the built-in Storage Blob Contributor role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles')
 resource sbdcRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
@@ -39,17 +32,7 @@ resource sbdrRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-
   name: 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
 }
 
-<<<<<<< HEAD
-//Grant Storage Blob Data Reader role to resource
-resource grant_sbdr_role 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (grant_reader) {
-  name: guid(subscription().subscriptionId, principalId, sbdrRoleDefinition.id)
-  scope: storage_account
-  properties: {
-    principalType: 'ServicePrincipal'
-    principalId: principalId
-    roleDefinitionId: sbdrRoleDefinition.id
-=======
-//Grant Storage Blob Data Contributor role to resource
+// Grant Storage Blob Data Contributor role to resource
 resource grant_sbdc_role 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (grant_contributor) {
   name: guid(subscription().subscriptionId, principalId, sbdcRoleDefinition.id)
   scope: resourceGroup(storage_rg)
@@ -57,22 +40,13 @@ resource grant_sbdc_role 'Microsoft.Authorization/roleAssignments@2020-04-01-pre
     principalType: 'ServicePrincipal'
     principalId: principalId
     roleDefinitionId: sbdcRoleDefinition.id
->>>>>>> upstream/main
   }
 }
 
-//Grant Storage Blob Data Reader role to resource
+// Grant Storage Blob Data Reader role to resource
 resource grant_sbdr_role 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (grant_reader) {
   name: guid(subscription().subscriptionId, principalId, sbdrRoleDefinition.id)
-<<<<<<< HEAD
-<<<<<<< HEAD
-  scope: storage_account
-=======
-  // scope: storage_account //needs to be uncommented when this is supported
->>>>>>> upstream/main
-=======
   scope: resourceGroup(storage_rg)
->>>>>>> github/main
   properties: {
     principalType: 'ServicePrincipal'
     principalId: principalId
