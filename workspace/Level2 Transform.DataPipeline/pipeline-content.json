@@ -472,14 +472,23 @@
         },
         "linkedService": {
           "name": "dw_gold",
+<<<<<<< HEAD
           "objectId": "7e2bbf6b-43fb-498c-90e3-56199c8c3b5e",
+=======
+>>>>>>> upstream/main
           "properties": {
             "annotations": [],
             "type": "DataWarehouse",
             "typeProperties": {
+<<<<<<< HEAD
               "endpoint": "2ipjetq4tn6elkixc3xundvzbi-u4ai3dmkby5u5daorxfpvr5n5q.datawarehouse.fabric.microsoft.com",
               "artifactId": "7e2bbf6b-43fb-498c-90e3-56199c8c3b5e",
               "workspaceId": "8d8d00a7-0e8a-4e3b-8c0e-8dcafac7adec"
+=======
+              "endpoint": "@pipeline().parameters.GoldDWEndpoint",
+              "artifactId": "@pipeline().parameters.GoldObjectID",
+              "workspaceId": "@pipeline().parameters.GoldWorkspaceID"
+>>>>>>> upstream/main
             }
           }
         }
@@ -772,6 +781,21 @@
       },
       "CustomParameters": {
         "type": "string"
+<<<<<<< HEAD
+=======
+      },
+      "GoldObjectID": {
+        "type": "string",
+        "defaultValue": "7e2bbf6b-43fb-498c-90e3-56199c8c3b5e"
+      },
+      "GoldWorkspaceID": {
+        "type": "string",
+        "defaultValue": "8d8d00a7-0e8a-4e3b-8c0e-8dcafac7adec"
+      },
+      "GoldDWEndpoint": {
+        "type": "string",
+        "defaultValue": "2ipjetq4tn6elkixc3xundvzbi-u4ai3dmkby5u5daorxfpvr5n5q.datawarehouse.fabric.microsoft.com"
+>>>>>>> upstream/main
       }
     },
     "variables": {

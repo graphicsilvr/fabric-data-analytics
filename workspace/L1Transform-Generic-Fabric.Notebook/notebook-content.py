@@ -121,7 +121,11 @@ WatermarkColName = None
 
 # CELL ********************
 
+<<<<<<< HEAD
 df = readFile(InputRawFileSystem,InputRawFileFolder,InputRawFile)
+=======
+df = readFile('bronze',InputRawFileSystem,InputRawFileFolder,InputRawFile)
+>>>>>>> upstream/main
 ingestCount = df.count()
 
 ct=CommonTransforms(df)

@@ -99,7 +99,11 @@ resource database 'Microsoft.Sql/servers/databases@2021-11-01' ={
 }
 
 //Get Reference to audit storage account
+<<<<<<< HEAD
 resource audit_storage_account 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+=======
+resource audit_storage_account 'Microsoft.Storage/storageAccounts@2023-01-01' existing = if(enable_audit) {
+>>>>>>> upstream/main
   name: audit_storage_name
   scope: resourceGroup(auditrg)
 }

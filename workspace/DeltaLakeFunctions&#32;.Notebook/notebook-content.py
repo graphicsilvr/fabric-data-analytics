@@ -14,6 +14,20 @@
 # META   }
 # META }
 
+<<<<<<< HEAD
+=======
+# CELL ********************
+
+%run /EnvSettings
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+>>>>>>> upstream/main
 # MARKDOWN ********************
 
 # ### Spark session configuration
@@ -22,10 +36,16 @@
 # CELL ********************
 
 from delta.tables import *
+<<<<<<< HEAD
 import json
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+=======
+from pyspark.sql.functions import *
+import json
+
+>>>>>>> upstream/main
 spark.conf.set("spark.sql.parquet.vorder.enabled", "true")
 spark.conf.set("spark.microsoft.delta.optimizeWrite.enabled", "true")
 spark.conf.set("spark.microsoft.delta.optimizeWrite.binSize", "1073741824")
@@ -43,18 +63,79 @@ spark.conf.set("spark.microsoft.delta.merge.lowShuffle.enabled", "true")
 
 # MARKDOWN ********************
 
+<<<<<<< HEAD
+=======
+# # getAbfsPath()
+# Gets the Azure Blob File System (ABFS) path of the OneLake medallion layer as URI abfss://workspaceId@onelake.dfs.fabric.microsoft.com/lakehouseID
+
+
+# CELL ********************
+
+def getAbfsPath(medallionLayer):
+    # ##########################################################################################################################  
+    # Function: getAbfsPath
+    # Gets the Azure Blob File System (ABFS) path of the OneLake medallion layer 
+    # as URI abfss://workspaceId@onelake.dfs.fabric.microsoft.com/lakehouseID
+    # 
+    # Parameters:
+    # medallionLayer =  Medallion layer of data platform. Valid values are bronze, silver or gold.
+    # 
+    # Returns:
+    # The ABFS URI as string
+
+    validMedallionLayer = ["bronze","silver","gold"]
+    assert medallionLayer in validMedallionLayer, "Invalid medallion layer. Valid values are bronze, silver or gold"
+
+    AbfsPath =None
+    workspaceId = None
+    lhName = None
+
+    match medallionLayer:
+        case "bronze":
+            workspaceId = bronzeWorkspaceId
+            lhName = bronzeLakehouseName
+        case "silver":
+            workspaceId = silverWorkspaceId
+            lhName = silverLakehouseName
+        case "gold":
+            workspaceId = goldWorkspaceId
+            lhName = goldLakehouseName
+
+    lh= notebookutils.lakehouse.getWithProperties(lhName,workspaceId)
+    abfsPath = lh.properties["abfsPath"]
+
+    return abfsPath
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+>>>>>>> upstream/main
 # # readFile()
 # Reads a data file from Lakehouse and returns as Spark dataframe
 
 
 # CELL ********************
 
+<<<<<<< HEAD
 def readFile(container, folder, file, colSeparator=None, headerFlag=None):
+=======
+def readFile(medallionLayer,container, folder, file, colSeparator=None, headerFlag=None):
+>>>>>>> upstream/main
   # ##########################################################################################################################  
   # Function: readFile
   # Reads a data file from Lakehouse and returns as spark dataframe
   # 
   # Parameters:
+<<<<<<< HEAD
+=======
+  # medallionLayer =  Medallion layer of data platform. Valid values are bronze, silver or gold.
+>>>>>>> upstream/main
   # container = Container of Lakehouse. Default value 'Files'
   # folder = Folder within container where data file resides. E.g 'raw-bronze/wwi/Sales/Orders/2013-01'
   # file = File name of data file including and file extension. E.g 'Sales_Orders_2013-01-01_000000.parquet'
@@ -64,10 +145,16 @@ def readFile(container, folder, file, colSeparator=None, headerFlag=None):
   # Returns:
   # A dataframe of the data file
   # ##########################################################################################################################    
+<<<<<<< HEAD
+=======
+    validMedallionLayer = ["bronze","silver","gold"]
+    assert medallionLayer in validMedallionLayer, "Invalid medallion layer. Valid values are bronze, silver or gold"
+>>>>>>> upstream/main
     assert container is not None, "container not provided"   
     assert folder is not None, "folder not provided"
     assert file is not None, "file not provided"
 
+<<<<<<< HEAD
     relativePath =   container + '/' + folder +'/' + file
 
     if ".csv" in file or ".txt" in file:
@@ -80,6 +167,22 @@ def readFile(container, folder, file, colSeparator=None, headerFlag=None):
         df = spark.read.orc(relativePath)
     else:
         df = spark.read.format("csv").load(relativePath)
+=======
+    abfsPath = getAbfsPath(medallionLayer)
+    relativePath =   container + '/' + folder +'/' + file
+    filePath = abfsPath + '/' + relativePath
+
+    if ".csv" in file or ".txt" in file:
+        df = spark.read.csv(path=filePath, sep=colSeparator, header=headerFlag, inferSchema="true")
+    elif ".parquet" in file:
+        df = spark.read.parquet(filePath)
+    elif ".json" in file:
+        df = spark.read.json(filePath, multiLine= True)
+    elif ".orc" in file:
+        df = spark.read.orc(filePath)
+    else:
+        df = spark.read.format("csv").load(filePath)
+>>>>>>> upstream/main
   
     df =df.dropDuplicates()
     return df
@@ -93,6 +196,120 @@ def readFile(container, folder, file, colSeparator=None, headerFlag=None):
 
 # MARKDOWN ********************
 
+<<<<<<< HEAD
+=======
+# # readMedallionLHTable()
+# Retrieves a Lakehouse Table from the medallion layers, allowing for table filtering and specific column selection
+
+# CELL ********************
+
+
+def readMedallionLHTable(medallionLayer,tableRelativePath, filterCond=None, colList=None):
+  # ##########################################################################################################################  
+  # Function: readMedallionLHTable
+  # Retrieves a Lakehouse Table from the medallion layers, allowing for table filtering and specific column selection
+  # 
+  # Parameters:
+  # medallionLayer =  Medallion layer of data platform. Valid values are bronze, silver or gold.
+  # tableRelativePath = Relative path of the LH table in format Tables/Schema/TableName
+  # filterCond = A valid filter condition for the table, passed as string. E.g "ColorName == 'Salmon'". Default value is None. 
+  #              If filterCond is None, the full table will be returned.
+  # colList = Columns to be selected, passed as list. E.g. ["ColorID","ColorName"]. Default value is None.
+  #           If colList is None, all columns in the table will be returned.
+  # 
+  # Returns:
+  # A dataframe containing the Lakehouse table.
+  # ##########################################################################################################################    
+    validMedallionLayer = ["bronze","silver","gold"]
+    assert medallionLayer in validMedallionLayer, "Invalid medallion layer. Valid values are bronze, silver or gold"
+    abfsPath = getAbfsPath(medallionLayer)
+    tablePath = abfsPath + '/' + tableRelativePath
+
+    # check if table exists
+    table = DeltaTable.forPath(spark,tablePath)
+    assert table is not None, "Lakehouse table does not exist"
+
+    df = spark.read.format("delta").load(tablePath)
+    
+    # Apply filter condition
+    if filterCond is not None:
+        df = df.filter(filterCond)
+
+    # Select columns
+    if colList is not None:
+        df = df.select(colList)
+
+    df =df.dropDuplicates()
+
+    return df
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# # readLHTable()
+# Retrieves a any Lakehouse Table from OneLake, allowing for table filtering and specific column selection. Use this function to read from any Lakehouse in Onelake outside data platform for e.g. a mirrored database, Fabric SQL etc
+
+# CELL ********************
+
+
+def readLHTable(LakehouseName,tableRelativePath,WorkspaceID=None, filterCond=None, colList=None):
+  # ##########################################################################################################################  
+  # Function: readLHTable
+  # Retrieves a any Lakehouse Table from OneLake, allowing for table filtering and specific column selection
+  # Use this function to read from any Lakehouse in Onelake outside data platform for e.g a mirrored database, Fabric SQL etc
+  #  
+  # Parameters:
+  # LakehouseName =  Name of lakehouse where table is located
+  # tableRelativePath = Relative path of the table in format Tables/Schema/TableName
+  # WorkspaceID = ID of Fabric Workspace where lakehouse is located. Default is None
+  #               If WorkspaceID is None, the default Lakhouse attached to the notebook will be used.  
+ 
+  # filterCond = A valid filter condition for the table, passed as string. E.g "ColorName == 'Salmon'". Default value is None. 
+  #              If filterCond is None, the full table will be returned.
+  # colList = Columns to be selected, passed as list. E.g. ["ColorID","ColorName"]. Default value is None.
+  #           If colList is None, all columns in the table will be returned.
+  # 
+  # Returns:
+  # A dataframe containing the Lakehouse table.
+  # ##########################################################################################################################    
+    lh = notebookutils.lakehouse.getWithProperties(LakehouseName,WorkspaceID)
+    abfsPath = lh.properties["abfsPath"]
+    tablePath = abfsPath + '/' + tableRelativePath
+
+    # check if table exists
+    table = DeltaTable.forPath(spark,tablePath)
+    assert table is not None, "Lakehouse table does not exist"
+
+    df = spark.read.format("delta").load(tablePath)
+    
+    # Apply filter condition
+    if filterCond is not None:
+        df = df.filter(filterCond)
+
+    # Select columns
+    if colList is not None:
+        df = df.select(colList)
+
+    df =df.dropDuplicates()
+
+    return df
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+>>>>>>> upstream/main
 # # insertDelta()
 # Inserts a dataframe to delta lake table. Creates a table with the schema of dataframe if the table doesn't already exist
 
@@ -258,6 +475,7 @@ def optimizeDelta(tableName):
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+<<<<<<< HEAD
 
 # CELL ********************
 
@@ -303,3 +521,5 @@ def optimizeDelta(tableName):
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+=======
+>>>>>>> upstream/main
