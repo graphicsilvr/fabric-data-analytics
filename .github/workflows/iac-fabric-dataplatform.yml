@@ -24,7 +24,7 @@ jobs:
       with:
         scope: subscription
         region: westeurope
-        subscriptionId: ${{ secrets.AZURE_CREDENTIALS_II }}
+        subscriptionId: ${{ secrets.AZURE_CREDENTIALS }}
         template: iac/bicep/main.bicep
         # parameters: 'k1=v1 k2=v2 k3=v3'
         failOnStdErr: false
