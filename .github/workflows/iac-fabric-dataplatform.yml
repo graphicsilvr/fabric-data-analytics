@@ -13,10 +13,17 @@ jobs:
     # Checkout code
     - uses: actions/checkout@v3
     
-    #Log into Azure
-    - uses: azure/login@v1
+    - name: Azure Login
+      uses: azure/login@v1
       with:
-           creds: '{"clientId":"${{ secrets.ACTION_SPN_CLIENTID }}","clientSecret":"${{ secrets.ACTION_SPN_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+        creds: ${{ secrets.ACTION_SPN_CLIENTID }}
+        client-secret: ${{ secrets.ACTION_SPN_SECRET }}
+        subscription-id: ${{ secrets.SUBSCRIPTION_ID }}
+        tenant-id: ${{ secrets.TENANT_ID }}
+        enable-AzPSSession: false
+        environment: azurecloud
+        allow-no-subscriptions: false
+        auth-type: spn
 
     # Deploy Bicep file
     - name: deploy
