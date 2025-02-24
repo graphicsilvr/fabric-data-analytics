@@ -16,7 +16,12 @@ jobs:
     # Log into Azure
     - uses: azure/login@v1
       with:
-           creds: ${{ secrets.AZURE_CREDENTIALS }}
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        enable-AzPSSession: false
+        environment: azurecloud
+        allow-no-subscriptions: false
+        audience: api://AzureADTokenExchange
+        auth-type: spn
 
     # Deploy Bicep file
     - name: deploy
