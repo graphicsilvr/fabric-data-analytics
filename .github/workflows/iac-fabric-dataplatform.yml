@@ -38,10 +38,6 @@ jobs:
       - name: Verify Azure Login
         run: az account show --output json
 
-      # Set Subscription Context
-      - name: Set Subscription Context
-        run: az account set --subscription ${{ secrets.AZURE_CREDENTIALS }}
-
       # Debug Deployment
       - name: Debug Deployment
         run: az deployment sub create --location westeurope --template-file iac/bicep/main.bicep --debug
