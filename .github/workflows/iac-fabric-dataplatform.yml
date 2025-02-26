@@ -12,11 +12,20 @@ jobs:
     steps:
     # Checkout code
     - uses: actions/checkout@v3
-    
+
+    - name: Debug Secrets
+      run: |
+        echo "Checking secrets..."
+        echo "ACTION_SPN_CLIENTID: ${{ secrets.ACTION_SPN_CLIENTID }}"
+        echo "TENANT_ID: ${{ secrets.TENANT_ID }}"
+        echo "SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}"
+
+
     #Log into Azure
     - uses: azure/login@v1
       with:
            creds: '{"clientId":"${{ secrets.ACTION_SPN_CLIENTID }}","clientSecret":"${{ secrets.ACTION_SPN_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+
 
     # Deploy Bicep file
     - name: deploy
