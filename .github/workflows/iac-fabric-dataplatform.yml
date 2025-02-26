@@ -26,13 +26,33 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Verify Azure Login
+      - name: Verify Azure Login
+        run: az account show
+
+      # Set Subscription Context
+      - name: Set Subscription Context
+        run: az account set --subscription ${{ secrets.SUBSCRIPTION_ID }}
+
+      # Debug Deployment
+      - name: Debug Deployment
+        run: az deployment sub create --location westeurope --template-file iac/bicep/main.bicep --debug
+
+      # Validate Bicep File
+      - name: Validate Bicep Syntax
+        run: az bicep build --file iac/bicep/main.bicep
+
+      # Check Service Principal Permissions
+      - name: Check Service Principal Permissions
+        run: az role assignment list --assignee $(jq -r '.clientId' <<< '${{ secrets.AZURE_CREDENTIALS }}')
+
       # Deploy Bicep file
       - name: Deploy
         uses: azure/arm-deploy@v1
         with:
           scope: subscription
           region: westeurope
-          subscriptionId: ${{ secrets.AZURE_CREDENTIALS }}
+          subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
           template: iac/bicep/main.bicep
           deploymentMode: Incremental  # Ensures existing resources remain untouched
           failOnStdErr: false
