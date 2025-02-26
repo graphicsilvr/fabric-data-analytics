@@ -14,11 +14,11 @@ param cost_centre_tag string = 'MCAPS'
 @description('System Owner tag that will be applied to all resources in this deployment')
 param owner_tag string = 'labsvirtual.com'
 
-@description('Subject Matter EXpert (SME) tag that will be applied to all resources in this deployment')
+@description('Subject Matter Expert (SME) tag that will be applied to all resources in this deployment')
 param sme_tag string = 'support@labsvirtual.com'
 
-@description('Timestamp that will be appendedto the deployment name')
-param deployment_suffix string = utcNow()
+@description('Timestamp that will be appended to the deployment name')
+param deployment_suffix string
 
 @description('Flag to indicate whether to create a new Purview resource with this data platform deployment')
 param create_purview bool = true
@@ -29,7 +29,7 @@ param enable_purview bool = true
 @description('Resource group where Purview will be deployed. Resource group will be created if it doesnt exist')
 param purviewrg string = 'rg-datagovernance'
 
-@description('Location of Purview resource. This may not be same as the Fabric resource group location')
+@description('Location of Purview resource. This may not be the same as the Fabric resource group location')
 param purview_location string = 'westeurope'
 
 @description('Resource Name of new or existing Purview Account. Must be globally unique. Specify a resource name if either create_purview=true or enable_purview=true')
@@ -42,6 +42,7 @@ param enable_audit bool = true
 param auditrg string = 'rg-audit'
 
 // Variables
+var deployment_suffix = utcNow()
 var fabric_deployment_name = 'fabric_dataplatform_deployment_${deployment_suffix}'
 var purview_deployment_name = 'purview_deployment_${deployment_suffix}'
 var keyvault_deployment_name = 'keyvault_deployment_${deployment_suffix}'
@@ -59,7 +60,7 @@ resource fabric_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   }
 }
 
-// Create purview resource group
+// Create Purview resource group
 resource purview_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = if (create_purview) {
   name: purviewrg
   location: purview_location
