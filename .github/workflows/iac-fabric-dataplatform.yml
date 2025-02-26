@@ -20,6 +20,14 @@ jobs:
           echo "Checking secrets..."
           echo "AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}"
 
+      # Debug Subscription ID
+      - name: Debug Subscription ID
+        run: echo "SUBSCRIPTION_ID=${{ secrets.SUBSCRIPTION_ID }}"
+
+      # Debug AZURE_CREDENTIALS JSON
+      - name: Debug AZURE_CREDENTIALS JSON
+        run: echo '${{ secrets.AZURE_CREDENTIALS }}' | jq '.'
+
       # Log into Azure
       - name: Login to Azure
         uses: azure/login@v1
@@ -28,7 +36,7 @@ jobs:
 
       # Verify Azure Login
       - name: Verify Azure Login
-        run: az account show
+        run: az account show --output json
 
       # Set Subscription Context
       - name: Set Subscription Context
@@ -42,11 +50,19 @@ jobs:
       - name: Validate Bicep Syntax
         run: az bicep build --file iac/bicep/main.bicep
 
+      # Debug Bicep File Location
+      - name: Debug Bicep File Location
+        run: ls -la iac/bicep
+
       # Check Service Principal Permissions
       - name: Check Service Principal Permissions
         run: az role assignment list --assignee $(jq -r '.clientId' <<< '${{ secrets.AZURE_CREDENTIALS }}')
 
       # Deploy Bicep file
+      - name: Deploy with Debugging
+        run: az deployment sub create --location westeurope --template-file iac/bicep/main.bicep --verbose --debug
+
+      # Deploy using ARM Deploy Action
       - name: Deploy
         uses: azure/arm-deploy@v1
         with:
