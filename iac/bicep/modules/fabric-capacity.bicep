@@ -28,11 +28,7 @@ param sme_tag string
   'F1024'
   'F2048'
 ])
-<<<<<<< HEAD
-param skuName string = 'F64'
-=======
 param skuName string = 'F2'
->>>>>>> upstream/main
 
 @description('The SKU tier of the Fabric Capacity instance.')
 param skuTier string = 'Fabric'
