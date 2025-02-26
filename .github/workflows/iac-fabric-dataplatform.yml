@@ -40,7 +40,7 @@ jobs:
 
       # Set Subscription Context
       - name: Set Subscription Context
-        run: az account set --subscription ${{ secrets.SUBSCRIPTION_ID }}
+        run: az account set --subscription ${{ secrets.AZURE_CREDENTIALS }}
 
       # Debug Deployment
       - name: Debug Deployment
