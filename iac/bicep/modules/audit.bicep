@@ -37,7 +37,7 @@ var audit_loganalytics_uniquename = '${audit_loganalytics_name}-${suffix}'
 
 // Create a Storage Account for Audit Logs
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: audit_storage_uniquename
+  name: 'virtuallabs'
   location: location
   tags: {
     CostCentre: cost_centre_tag
