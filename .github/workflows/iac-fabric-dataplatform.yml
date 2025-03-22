@@ -1,71 +1,78 @@
-name: Provision Fabric Data Platform
+name: Deploy Bicep Template with Parameters
 
 on:
-  workflow_dispatch
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - '**.bicep'
+  push:
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Checkout code
-      - uses: actions/checkout@v3
+      # Checkout source code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Debug Secrets
-        run: |
-          echo "Checking secrets..."
-          echo "AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}"
-
-      # Debug Subscription ID
-      - name: Debug Subscription ID
-        run: echo "SUBSCRIPTION_ID=${{ secrets.SUBSCRIPTION_ID }}"
-
-      # Debug AZURE_CREDENTIALS JSON
-      - name: Debug AZURE_CREDENTIALS JSON
-        run: echo '${{ secrets.AZURE_CREDENTIALS }}' | jq '.'
-
-      # Log into Azure
-      - name: Login to Azure
+      # Azure CLI Login
+      - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Verify Azure Login
-      - name: Verify Azure Login
-        run: az account show --output json
+      # Install Bicep CLI
+      - name: Install Bicep CLI
+        run: az bicep install
 
-      # Debug Deployment
-      - name: Debug Deployment
-        run: az deployment sub create --location westeurope --template-file iac/bicep/main.bicep --debug
-
-      # Validate Bicep File
-      - name: Validate Bicep Syntax
+      # Validate Bicep Syntax
+      - name: Validate Bicep Template Syntax
         run: az bicep build --file iac/bicep/main.bicep
 
-      # Debug Bicep File Location
+      # Optional: Debug Bicep File Location
       - name: Debug Bicep File Location
         run: ls -la iac/bicep
 
-      # Check Service Principal Permissions
-      - name: Check Service Principal Permissions
-        run: az role assignment list --assignee $(jq -r '.clientId' <<< '${{ secrets.AZURE_CREDENTIALS }}')
+      # Optional: Check if Required Parameters Are Present
+      - name: Output Bicepparam File for Debugging
+        run: cat iac/bicep/main.bicepparam
 
-      # Deploy Bicep file
-      - name: Deploy with Debugging
-        run: az deployment sub create --location westeurope --template-file iac/bicep/main.bicep --verbose --debug
+      # Validate Parameterized Deployment
+      - name: Validate Bicep Deployment with Parameters
+        run: |
+          az deployment sub validate \
+            --location westeurope \
+            --template-file iac/bicep/main.bicep \
+            --parameters @iac/bicep/main.bicepparam \
+            --debug
 
-      # Deploy using ARM Deploy Action
-      - name: Deploy
+      # What-If Analysis (Optional Pre-check)
+      - name: Preview What-If Deployment
+        run: |
+          az deployment sub what-if \
+            --location westeurope \
+            --template-file iac/bicep/main.bicep \
+            --parameters @iac/bicep/main.bicepparam \
+            --debug
+
+      # Final Bicep Deployment
+      - name: Deploy Bicep Template with Parameters
+        run: |
+          az deployment sub create \
+            --location westeurope \
+            --template-file iac/bicep/main.bicep \
+            --parameters @iac/bicep/main.bicepparam \
+            --debug
+
+      # Optional: Deploy using Azure ARM Deploy GitHub Action
+      - name: ARM Deploy (Optional)
         uses: azure/arm-deploy@v1
         with:
           scope: subscription
           region: westeurope
           subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
           template: iac/bicep/main.bicep
-          deploymentMode: Incremental  # Ensures existing resources remain untouched
+          parameters: iac/bicep/main.bicepparam
+          deploymentMode: Incremental
           failOnStdErr: false
+
 
