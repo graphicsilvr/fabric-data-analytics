@@ -20,13 +20,11 @@ resource storage_account 'Microsoft.Storage/storageAccounts@2023-01-01' existing
 }
 
 // In-built role definition for storage account
-@description('This is the built-in Storage Blob Contributor role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles')
 resource sbdcRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
   name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 }
 
-@description('This is the built-in Storage Blob Reader role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor')
 resource sbdrRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
   name: 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
