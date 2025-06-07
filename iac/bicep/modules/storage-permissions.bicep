@@ -34,8 +34,8 @@ resource sbdrRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-
 
 // Grant Storage Blob Data Contributor role to resource
 resource grant_sbdc_role 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (grant_contributor) {
-  name: guid(subscription().subscriptionId, principalId, sbdcRoleDefinition.id)
-  scope: resourceGroup(storage_rg)
+  name: guid(storage_account.id, principalId, sbdcRoleDefinition.id)
+  scope: storage_account
   properties: {
     principalType: 'ServicePrincipal'
     principalId: principalId
@@ -45,11 +45,12 @@ resource grant_sbdc_role 'Microsoft.Authorization/roleAssignments@2020-04-01-pre
 
 // Grant Storage Blob Data Reader role to resource
 resource grant_sbdr_role 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (grant_reader) {
-  name: guid(subscription().subscriptionId, principalId, sbdrRoleDefinition.id)
-  scope: resourceGroup(storage_rg)
+  name: guid(storage_account.id, principalId, sbdrRoleDefinition.id)
+  scope: storage_account
   properties: {
     principalType: 'ServicePrincipal'
     principalId: principalId
     roleDefinitionId: sbdrRoleDefinition.id
   }
+}
 }
