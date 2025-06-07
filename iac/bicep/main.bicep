@@ -2,43 +2,43 @@
 targetScope = 'subscription'
 
 // Parameters
-@description('Resource group where Microsoft Fabric capacity will be deployed. Resource group will be created if it doesnt exist')
+@description('Resource group where Microsoft Fabric capacity will be deployed.')
 param dprg string = 'rg-fabric'
 
 @description('Microsoft Fabric Resource group location')
 param rglocation string = 'westeurope'
 
-@description('Cost Centre tag that will be applied to all resources in this deployment')
+@description('Cost Centre tag for all resources')
 param cost_centre_tag string = 'MCAPS'
 
-@description('System Owner tag that will be applied to all resources in this deployment')
+@description('System Owner tag')
 param owner_tag string = 'labsvirtual.com'
 
-@description('Subject Matter Expert (SME) tag that will be applied to all resources in this deployment')
+@description('Subject Matter Expert (SME) tag')
 param sme_tag string = 'support@labsvirtual.com'
 
-@description('Timestamp that will be appended to the deployment name')
-param deployment_suffix string = 'defaultSuffix' // Ensuring a default value
+@description('Deployment suffix')
+param deployment_suffix string = 'defaultSuffix'
 
-@description('Flag to indicate whether to create a new Purview resource with this data platform deployment')
+@description('Create new Purview resource?')
 param create_purview bool = true
 
-@description('Flag to indicate whether to enable integration of data platform resources with either an existing or new Purview resource')
+@description('Enable Purview integration?')
 param enable_purview bool = true
 
-@description('Resource group where Purview will be deployed. Resource group will be created if it doesnt exist')
+@description('Purview resource group')
 param purviewrg string = 'rg-datagovernance'
 
-@description('Location of Purview resource. This may not be the same as the Fabric resource group location')
+@description('Purview location')
 param purview_location string = 'westeurope'
 
-@description('Resource Name of new or existing Purview Account. Must be globally unique.')
-param purview_name string = 'labsvirtual-${deployment_suffix}' // Ensuring uniqueness
+@description('Purview Account Name')
+param purview_name string = 'labsvirtual-${deployment_suffix}'
 
-@description('Flag to indicate whether auditing of data platform resources should be enabled')
+@description('Enable audit?')
 param enable_audit bool = true
 
-@description('Resource group where audit resources will be deployed if enabled. Resource group will be created if it doesnt exist')
+@description('Audit resource group')
 param auditrg string = 'rg-audit'
 
 // Variables
@@ -48,18 +48,18 @@ var keyvault_deployment_name = 'keyvault_deployment_${deployment_suffix}'
 var audit_deployment_name = 'audit_deployment_${deployment_suffix}'
 var controldb_deployment_name = 'controldb_deployment_${deployment_suffix}'
 
-// Create data platform resource group
-resource fabric_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+// Reference existing resource groups if they already exist
+resource fabric_rg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
   name: dprg
-  location: rglocation
-  tags: {
-    CostCentre: cost_centre_tag
-    Owner: owner_tag
-    SME: sme_tag
-  }
 }
 
-// Create Purview resource group
+// Reference existing capacity if already created
+resource fabric_capacity_res 'Microsoft.Fabric/capacities@2023-11-01-preview' existing = {
+  name: 'labsready'
+  scope: fabric_rg
+}
+
+// Purview resource group (created only if needed)
 resource purview_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = if (create_purview) {
   name: purviewrg
   location: purview_location
@@ -70,7 +70,7 @@ resource purview_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = if (create
   }
 }
 
-// Create audit resource group
+// Audit resource group (created only if needed)
 resource audit_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = if (enable_audit) {
   name: auditrg
   location: rglocation
@@ -81,10 +81,10 @@ resource audit_rg 'Microsoft.Resources/resourceGroups@2024-03-01' = if (enable_a
   }
 }
 
-// Deploy Purview using module
+// Deploy Purview using module (remove deployment_suffix if not needed)
 module purview './modules/purview.bicep' = if (create_purview || enable_purview) {
   name: purview_deployment_name
-  scope: resourceGroup(purviewrg) // Correcting scope
+  scope: resourceGroup(purviewrg)
   params: {
     create_purview: create_purview
     enable_purview: enable_purview
@@ -94,16 +94,16 @@ module purview './modules/purview.bicep' = if (create_purview || enable_purview)
     cost_centre_tag: cost_centre_tag
     owner_tag: owner_tag
     sme_tag: sme_tag
-    deployment_suffix: deployment_suffix // Passing as a parameter
+    // deployment_suffix: deployment_suffix  <-- Only include if defined in purview.bicep
   }
 }
 
-// Deploy Key Vault with default access policies using module
+// Key Vault deployment
 module kv './modules/keyvault.bicep' = {
   name: keyvault_deployment_name
   scope: fabric_rg
   params: {
-    location: fabric_rg.location
+    location: rglocation
     keyvault_name: 'ba-kv01'
     cost_centre_tag: cost_centre_tag
     owner_tag: owner_tag
@@ -116,16 +116,16 @@ module kv './modules/keyvault.bicep' = {
 
 // Reference existing Key Vault
 resource kv_ref 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: 'ba-kv01' // Use hardcoded name to avoid output dependency issues
+  name: 'ba-kv01'
   scope: fabric_rg
 }
 
-// Enable auditing for data platform resources
+// Audit integration module
 module audit_integration './modules/audit.bicep' = if (enable_audit) {
   name: audit_deployment_name
   scope: audit_rg
   params: {
-    location: audit_rg.location
+    location: rglocation
     cost_centre_tag: cost_centre_tag
     owner_tag: owner_tag
     sme_tag: sme_tag
@@ -135,18 +135,18 @@ module audit_integration './modules/audit.bicep' = if (enable_audit) {
   }
 }
 
-// Deploy Microsoft Fabric Capacity
+// Deploy Fabric Capacity using existing resource
 module fabric_capacity './modules/fabric-capacity.bicep' = {
   name: fabric_deployment_name
   scope: fabric_rg
   params: {
-    fabric_name: 'bafabric01'
-    location: fabric_rg.location
+    fabric_name: fabric_capacity_res.name
+    location: rglocation
     cost_centre_tag: cost_centre_tag
     owner_tag: owner_tag
     sme_tag: sme_tag
     adminUsers: kv_ref.getSecret('fabric-capacity-admin-username')
-    skuName: 'F4' // Ensure it's not declared multiple times elsewhere
+    skuName: 'F4'
   }
 }
 
@@ -157,7 +157,7 @@ module controldb './modules/sqldb.bicep' = {
   params: {
     sqlserver_name: 'ba-sql01'
     database_name: 'controlDB'
-    location: fabric_rg.location
+    location: rglocation
     cost_centre_tag: cost_centre_tag
     owner_tag: owner_tag
     sme_tag: sme_tag
